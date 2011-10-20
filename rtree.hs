@@ -1,12 +1,15 @@
-module RTree where
+module Main where
 
 import System
+import System.CPUTime
 import Char
 import Data.List
 import Data.Bits
 import Data.List.Split
 import Data.Ord
+import Text.Printf
 
+--Data Types
 data Point = Point {
     xCoord :: Int,
     yCoord :: Int
@@ -30,37 +33,53 @@ data RTree =
         lhv :: Int
     } deriving Show
         
-
+--"Constants"
 --our max coordinate is 2^16, so we need an order 16 Hilbert curve
 hilbertOrder :: Int
 hilbertOrder = 16
 
 --max capacity of a Leaf node
 c_l :: Int
-c_l = 2
+c_l = 5
 
 --max capacity of an Inner node
 c_n :: Int
-c_n = 2
+c_n = 5
 
 
 main :: IO ()
 main = do
     (fileName:_) <- getArgs
+    
+    start <- getCPUTime
     s <- readFile fileName
-    --let root = buildRTreeFromString
-    putStrLn "hi"
-
-
-buildRTreeFromString :: String -> RTree
-buildRTreeFromString fileContents =
-    let rects = map strToRect $ lines fileContents
+    let rects = map strToRect $ lines s
         sortedRects = sortBy (\r -> comparing hVal r) rects
-        --rectCount = length sortedRects
-    in
-        buildRTreeFromRects sortedRects
+        root = buildRTreeFromRects sortedRects
+    endBuild <- getCPUTime
+    
+    let diff = (fromIntegral (endBuild - start)) / (10^6)
+        rectsCount = length rects
+    printf "%s: %d rectangles processed in %0.3f microseconds\n"
+        fileName rectsCount (diff :: Double)
+    
+    --queryLoop
 
- 
+
+
+{-
+ -}        
+buildInnerNodes :: [RTree] -> [RTree]
+buildInnerNodes nodes
+    | (length nodes == 1) = nodes
+    | otherwise = buildInnerNodes $ map (\ns -> Inner {
+            children = ns,
+            mbr = foldr1 findMbr (map mbr ns),
+            lhv = maximum $ map lhv ns
+        }) (splitList c_n nodes)
+
+{-
+ -} 
 buildRTreeFromRects :: [Rect] -> RTree
 buildRTreeFromRects sortedRects =
     head $ buildInnerNodes leaves
@@ -72,43 +91,6 @@ buildRTreeFromRects sortedRects =
                     lhv = maximum $ map hVal rs 
                 }) groupedRects
 
-
-         
-buildInnerNodes :: [RTree] -> [RTree]
-buildInnerNodes nodes
-    | (length nodes == 1) = nodes
-    | otherwise = buildInnerNodes $ map (\ns -> Inner {
-            children = ns,
-            mbr = foldr1 findMbr (map mbr ns),
-            lhv = maximum $ map lhv ns
-        }) (splitList c_n nodes)
-
-
-{-
- -}
-splitList :: Int -> [a] -> [[a]]
-splitList n xs
-   | length xs <= n = [xs]
-   | otherwise = [take n xs] ++ splitList n (drop n xs)
-
-{- Convert a String of the form "x1,y1,x2,y2,x3,y3,x4,y4" to a Rect
- -}
-strToRect :: String -> Rect
-strToRect line =
-	Rect { llPoint = Point { xCoord = xLow, yCoord = yLow},
-	       urPoint = Point { xCoord = xHi, yCoord = yHi },
-	       hVal = hilbertDistance hilbertOrder (xCenter,yCenter)
-	     }
-	where [x1,y1,x2,y2,x3,y3,x4,y4] = splitOn "," line
-	      xCoords = toIntList [x1,x2,x3,x4]
-	      yCoords = toIntList [y1,y2,y3,y4]
-	      xLow = minimum xCoords
-	      yLow = minimum yCoords
-	      xHi = maximum xCoords
-	      yHi = maximum yCoords
-	      xCenter = (xLow + xHi) `div` 2
-	      yCenter = (yLow + yHi) `div` 2
-	      
 
 {-True if two Rects intersect 
  -}
@@ -136,13 +118,10 @@ findMbr r1 r2 =
         yHi = maximum [(yCoord $ urPoint r1), (yCoord $ urPoint r2)]
 
 
-toIntList :: [String] -> [Int]
-toIntList = map read
+{- Calculates the distance to (x,y) along a hilbert curve of order 'd'
 
-
-{-
-Borrowed from Bryan's blog at:
-http://www.serpentine.com/blog/2007/01/11/
+ Borrowed from Bryan's blog at:
+ http://www.serpentine.com/blog/2007/01/11/
 	two-dimensional-spatial-hashing-with-space-filling-curves/
  -}
 hilbertDistance :: (Bits a, Ord a) => Int -> (a,a) -> a
@@ -159,6 +138,49 @@ hilbertDistance d (x,y)
                           (side * 2 - x - 1)
               (_, _)   -> step (result + area * 2) (x - side) (y - side)
               where step = dist (side `shiftR` 1) (area `shiftR` 2)
+
+
+{-queryLoop :: IO ()
+queryLoop = do
+    input <- getLine
+    if input == "\EOT"
+        then return ()
+        else
+            let r = strToRect input
+-}            
+
+
+{-
+ -}
+splitList :: Int -> [a] -> [[a]]
+splitList n xs
+   | length xs <= n = [xs]
+   | otherwise = [take n xs] ++ splitList n (drop n xs)
+
+
+{- Convert a String of the form "x1,y1,x2,y2,x3,y3,x4,y4" to a Rect
+ -}
+strToRect :: String -> Rect
+strToRect line =
+	Rect { llPoint = Point { xCoord = xLow, yCoord = yLow},
+	       urPoint = Point { xCoord = xHi, yCoord = yHi },
+	       hVal = hilbertDistance hilbertOrder (xCenter,yCenter)
+	     }
+	where [x1,y1,x2,y2,x3,y3,x4,y4] = splitOn "," line
+	      xCoords = toIntList [x1,x2,x3,x4]
+	      yCoords = toIntList [y1,y2,y3,y4]
+	      xLow = minimum xCoords
+	      yLow = minimum yCoords
+	      xHi = maximum xCoords
+	      yHi = maximum yCoords
+	      xCenter = (xLow + xHi) `div` 2
+	      yCenter = (yLow + yHi) `div` 2
+	      
+	      
+--The magic is in the type
+toIntList :: [String] -> [Int]
+toIntList = map read
+
 
 instance Eq Rect where
     r1 == r2    = (llPoint r1) == (llPoint r2) && (urPoint r1) == (urPoint r2)

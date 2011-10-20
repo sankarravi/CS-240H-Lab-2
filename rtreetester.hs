@@ -41,4 +41,6 @@ instance Arbitrary Rect where
 			urPoint = Point { xCoord = xHiAbs, yCoord = yHiAbs },
 			hVal = 0
 	     }
-	     
+
+positiveCoord :: (Arbitrary a) => Int -> Gen (Positive a)
+positiveCoord = liftM Int arbitrary suchthat
