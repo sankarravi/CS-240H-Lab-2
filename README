@@ -1,0 +1,18 @@
+README
+
+Ravi Sankar (sankarr@stanford.edu)
+
+Build the file by running "ghc --make h-r-tree"
+
+
+Significant code inspiration from the following places online:
+
+Overlapping rectangles: http://stackoverflow.com/questions/306316/
+	determine-if-two-rectangles-overlap-each-other/306332#306332
+
+R-Trees in Haskell [heavy inspiration]: http://neonstorm242.blogspot.com/2011/02/
+	spatial-range-queries-using-r-trees.html
+
+Hilbert curves [copied in full]:
+http://www.serpentine.com/blog/2007/01/11/
+	two-dimensional-spatial-hashing-with-space-filling-curves/
