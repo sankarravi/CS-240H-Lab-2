@@ -1,7 +1,6 @@
 module RTree where
 
 import System
-import System.CPUTime
 import Char
 import Data.List
 import Data.Bits

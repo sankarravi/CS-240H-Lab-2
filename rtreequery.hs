@@ -40,5 +40,20 @@ queryLoop root = do
             let diff = (fromIntegral (end - start)) / (10^6)
             printf "found %d matches in %0.1f microseconds\n"
                 (length matches) (diff :: Double)
-            --mapM_ (return show) (take 4 matches)
+            mapM_ printRectCorners (take 4 matches)
             queryLoop root
+            
+printRectCorners :: Rect -> IO ()
+printRectCorners r =
+	printf "\t%d,%d,%d,%d,%d,%d,%d,%d\n" x1 y1 x2 y2 x3 y3 x4 y4
+	where
+		x1 = xCoord $ llPoint r
+		y1 = yCoord $ llPoint r
+		x2 = x1
+		y2 = y3
+		x3 = xCoord $ urPoint r
+		y3 = yCoord $ urPoint r
+		x4 = x3
+		y4 = y1
+		
+		
