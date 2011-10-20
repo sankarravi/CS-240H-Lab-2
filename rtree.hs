@@ -1,4 +1,4 @@
-module Main where
+module RTree where
 
 import System
 import System.CPUTime
@@ -45,26 +45,6 @@ c_l = 5
 --max capacity of an Inner node
 c_n :: Int
 c_n = 5
-
-
-main :: IO ()
-main = do
-    (fileName:_) <- getArgs
-    
-    start <- getCPUTime
-    s <- readFile fileName
-    let rects = map strToRect $ lines s
-        sortedRects = sortBy (\r -> comparing hVal r) rects
-        root = buildRTreeFromRects sortedRects
-    end <- getCPUTime
-    
-    let diff = (fromIntegral (end - start)) / (10^6)
-        rectsCount = length rects
-    printf "%s: %d rectangles processed in %0.3f microseconds\n"
-        fileName rectsCount (diff :: Double)
-    
-    queryLoop root
-
 
 
 {-
@@ -138,27 +118,7 @@ hilbertDistance d (x,y)
                           (side * 2 - x - 1)
               (_, _)   -> step (result + area * 2) (x - side) (y - side)
               where step = dist (side `shiftR` 1) (area `shiftR` 2)
-
-
-{- Repeatedly accepts a user string representing a rectangle
- and queries the RTree starting at root. Terminates with EOF
- -}
-queryLoop :: RTree -> IO ()
-queryLoop root = do
-    input <- getLine
-    if (input == "\EOT")
-        then return ()
-        else do
-            start <- getCPUTime
-            let r = strToRect input
-                matches = queryRTree root r
-            end <- getCPUTime
-            let diff = (fromIntegral (end - start)) / (10^6)
-            printf "found %d matches in %0.1f microseconds\n"
-                (length matches) (diff :: Double)
-            --mapM_ (return show) (take 4 matches)
-            queryLoop root
-            
+           
 
 {- Implements the RTree search algorithm: at non-leaves, check if the MBR overlaps
  with our search window and descend if so. At leaves, check for intersection and

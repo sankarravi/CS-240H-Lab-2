@@ -2,15 +2,19 @@ README
 
 Ravi Sankar (sankarr@stanford.edu)
 
-Build the file by running "ghc --make h-r-tree"
+Build the program by running "ghc --make rtreequery"
+Run the program as "./rtreequery <rects_file.txt>"
+Query rectangles by entering strings of the form "x1,y1,x2,y2,x3,y3,x4,y4" in stdin
 
 
 Significant code inspiration from the following places online:
 
-Overlapping rectangles: http://stackoverflow.com/questions/306316/
+Overlapping rectangles:
+http://stackoverflow.com/questions/306316/
 	determine-if-two-rectangles-overlap-each-other/306332#306332
 
-R-Trees in Haskell [heavy inspiration]: http://neonstorm242.blogspot.com/2011/02/
+R-Trees in Haskell [heavy inspiration]:
+http://neonstorm242.blogspot.com/2011/02/
 	spatial-range-queries-using-r-trees.html
 
 Hilbert curves [copied in full]:
