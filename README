@@ -4,7 +4,16 @@ Ravi Sankar (sankarr@stanford.edu)
 
 Build the program by running "ghc --make rtreequery"
 Run the program as "./rtreequery <rects_file.txt>"
-Query rectangles by entering strings of the form "x1,y1,x2,y2,x3,y3,x4,y4" in stdin
+Query rectangles by entering strings of the form 
+	"x1,y1,x2,y2,x3,y3,x4,y4" in stdin
+
+
+I attempted to build a couple of QuickCheck tests in rtreetester.hs to test my
+bounding box and rectangle intersection code, but I ran into two issues that
+I couldn't resolve in time:
+1. generating an arbitrary positive Int < 65536
+2. I had a parse error that I was just unable to figure out in 
+	boundingBox/verifyOverlap
 
 
 Significant code inspiration from the following places online:
