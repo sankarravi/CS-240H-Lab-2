@@ -56,14 +56,14 @@ main = do
     let rects = map strToRect $ lines s
         sortedRects = sortBy (\r -> comparing hVal r) rects
         root = buildRTreeFromRects sortedRects
-    endBuild <- getCPUTime
+    end <- getCPUTime
     
-    let diff = (fromIntegral (endBuild - start)) / (10^6)
+    let diff = (fromIntegral (end - start)) / (10^6)
         rectsCount = length rects
     printf "%s: %d rectangles processed in %0.3f microseconds\n"
         fileName rectsCount (diff :: Double)
     
-    --queryLoop
+    queryLoop root
 
 
 
@@ -88,7 +88,7 @@ buildRTreeFromRects sortedRects =
         leaves = map (\rs -> Leaf { 
                     rects = rs,
                     mbr = foldr1 findMbr rs,
-                    lhv = maximum $ map hVal rs 
+                    lhv = maximum $ map hVal rs
                 }) groupedRects
 
 
@@ -96,10 +96,10 @@ buildRTreeFromRects sortedRects =
  -}
 checkIntersection :: Rect -> Rect -> Bool
 checkIntersection r1 r2 =
-    (xCoord $ llPoint r1) < (xCoord $ urPoint r2) &&
-    (xCoord $ urPoint r1) > (xCoord $ llPoint r2) &&
-    (yCoord $ urPoint r1) < (yCoord $ llPoint r2) &&
-    (yCoord $ llPoint r1) > (yCoord $ urPoint r2)
+    (xCoord $ llPoint r1) <= (xCoord $ urPoint r2) &&
+    (xCoord $ urPoint r1) >= (xCoord $ llPoint r2) &&
+    (yCoord $ urPoint r1) >= (yCoord $ llPoint r2) &&
+    (yCoord $ llPoint r1) <= (yCoord $ urPoint r2)
 
 
 {- Take two Rects and return their MBR (Minimum Bounding Rectangle)
@@ -140,17 +140,39 @@ hilbertDistance d (x,y)
               where step = dist (side `shiftR` 1) (area `shiftR` 2)
 
 
-{-queryLoop :: IO ()
-queryLoop = do
+{- Repeatedly accepts a user string representing a rectangle
+ and queries the RTree starting at root. Terminates with EOF
+ -}
+queryLoop :: RTree -> IO ()
+queryLoop root = do
     input <- getLine
-    if input == "\EOT"
+    if (input == "\EOT")
         then return ()
-        else
+        else do
+            start <- getCPUTime
             let r = strToRect input
--}            
+                matches = queryRTree root r
+            end <- getCPUTime
+            let diff = (fromIntegral (end - start)) / (10^6)
+            printf "found %d matches in %0.1f microseconds\n"
+                (length matches) (diff :: Double)
+            --mapM_ (return show) (take 4 matches)
+            queryLoop root
+            
+
+{- Implements the RTree search algorithm: at non-leaves, check if the MBR overlaps
+ with our search window and descend if so. At leaves, check for intersection and
+ return the matches
+ -}
+queryRTree :: RTree -> Rect -> [Rect] 
+queryRTree l@Leaf{ rects = rs } searchRect = filter (\r -> checkIntersection searchRect r) rs 
+queryRTree n@Inner { children = childNodes, mbr = myMbr } searchRect =
+    if checkIntersection searchRect myMbr
+        then concatMap (\child -> queryRTree child searchRect) childNodes
+        else []
 
 
-{-
+{- Split a list of as into a list of list of as of max size n
  -}
 splitList :: Int -> [a] -> [[a]]
 splitList n xs
